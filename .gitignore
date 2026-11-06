@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Build output
+build/
+dist/
+*.spec
+!scripts/CodexQuota.spec
+
+# Local credentials and settings
+.env
+.env.*
+auth.json
+settings.json
+*.log
+*.tmp
+
+# Generated previews
+preview*.png
+preview-*.png
