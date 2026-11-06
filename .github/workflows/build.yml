@@ -1,0 +1,90 @@
+name: Build desktop packages
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-x64
+            runner: windows-2022
+          - platform: linux-x64
+            runner: ubuntu-22.04
+          - platform: macos-arm64
+            runner: macos-15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-build.txt
+
+      - name: Build application
+        run: python -m PyInstaller --noconfirm --clean --distpath dist --workpath build scripts/CodexQuota.spec
+
+      - name: Package Windows build
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path 'dist\CodexQuota' -DestinationPath 'CodexQuota-${{ matrix.platform }}.zip' -CompressionLevel Optimal
+
+      - name: Package Linux build
+        if: runner.os == 'Linux'
+        run: tar -czf 'CodexQuota-${{ matrix.platform }}.tar.gz' -C dist CodexQuota
+
+      - name: Package macOS app
+        if: runner.os == 'macOS'
+        run: ditto -c -k --sequesterRsrc --keepParent 'dist/CodexQuota.app' 'CodexQuota-${{ matrix.platform }}.zip'
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: CodexQuota-${{ matrix.platform }}
+          path: CodexQuota-${{ matrix.platform }}.*
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download all platform packages
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release and attach packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: gh release create "$TAG_NAME" release-assets/* --verify-tag --title "$TAG_NAME" --generate-notes
+
