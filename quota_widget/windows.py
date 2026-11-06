@@ -30,8 +30,14 @@ DEFAULT_SETTINGS: dict[str, Any] = {
 
 def settings_path() -> Path:
     """Return the per-user preferences path without creating it."""
-    local_appdata = os.environ.get("LOCALAPPDATA")
-    base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+    if sys.platform == "win32":
+        local_appdata = os.environ.get("LOCALAPPDATA")
+        base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        config_home = os.environ.get("XDG_CONFIG_HOME")
+        base = Path(config_home) if config_home else Path.home() / ".config"
     return base / "CodexQuota" / "settings.json"
 
 
@@ -244,3 +250,4 @@ def is_startup_enabled() -> bool:
             return kind in (winreg.REG_SZ, winreg.REG_EXPAND_SZ) and bool(value)
     except OSError:
         return False
+
