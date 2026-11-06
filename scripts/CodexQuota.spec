@@ -1,7 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""Portable Windows build; do not collect another program's ICU from PATH."""
+"""Cross-platform desktop build; avoid collecting foreign ICU on Windows."""
 
 from pathlib import Path
+import sys
 
 
 project_root = Path(SPECPATH).resolve().parent
@@ -25,11 +26,12 @@ a = Analysis(
 # icuuc.dll instead, whose exports are versioned (ucnv_open_78). The executable
 # then fails while importing QtCore. Leave Windows ICU to System32 and omit the
 # accidentally collected ICU 78 data dependency as well.
-foreign_icu = {"icuuc.dll", "icudt78.dll"}
-a.binaries = [
-    entry for entry in a.binaries
-    if Path(entry[0]).name.lower() not in foreign_icu
-]
+if sys.platform == "win32":
+    foreign_icu = {"icuuc.dll", "icudt78.dll"}
+    a.binaries = [
+        entry for entry in a.binaries
+        if Path(entry[0]).name.lower() not in foreign_icu
+    ]
 
 pyz = PYZ(a.pure)
 
@@ -49,7 +51,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=[str(project_root / "assets" / "app.ico")],
+    icon=[str(project_root / "assets" / "app.ico")] if sys.platform == "win32" else None,
 )
 
 coll = COLLECT(
@@ -61,3 +63,12 @@ coll = COLLECT(
     upx_exclude=[],
     name="CodexQuota",
 )
+
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="CodexQuota.app",
+        icon=None,
+        bundle_identifier="com.likeyun.codexquotawidget",
+    )
+
