@@ -1,6 +1,6 @@
 # CodexQuotaWidget
 
-轻量的 Windows 桌面额度小组件：在桌面查看 Codex 的 5 小时额度、周额度和重置时间，也可通过仅监听本机的 HTTP API 读取整理后的用量数据。🔎
+轻量的跨平台桌面额度小组件：在桌面查看 Codex 的 5 小时额度、周额度和重置时间，也可通过仅监听本机的 HTTP API 读取整理后的用量数据。🔎
 
 ![CodexQuotaWidget UI preview](docs/ui-preview.png)
 
@@ -9,20 +9,22 @@
 - **两种桌面布局**：320 × 320 主卡片和 200 × 78 迷你组件，双击可切换。
 - **额度回退**：优先显示有效的 5 小时额度；该额度不可用时显示周额度。
 - **状态清晰**：显示剩余额度进度、同步状态、缓存状态、北京时间和重置倒计时。
-- **Windows 桌面体验**：半透明磨砂面板、DPI 缩放、窗口拖动、置顶、系统托盘和可选开机启动。
+- **桌面体验**：半透明磨砂面板、DPI 缩放、窗口拖动、置顶和系统托盘；Windows 提供可选开机启动。
 - **本地 HTTP API**：组件与 API 共用缓存；服务仅绑定 `127.0.0.1`。
 - **保护登录凭据**：自动读取本机 Codex 登录凭据，不需要粘贴浏览器 Token 或 Cookie。
 
 ## 🖥️ 环境要求
 
-- Windows 10 或 Windows 11
+- Windows 10 / 11、macOS（Apple Silicon）或 64 位 Linux
 - Python 3.10 或更新版本（从源码运行时）
 - 使用 ChatGPT 账号登录的 Codex 桌面应用
 - 首次安装依赖时需要网络连接
 
 ## 🚀 快速开始
 
-克隆项目后，在项目目录双击 `Start-Widget.cmd`。脚本会在需要时创建 `.venv`、安装运行依赖并启动小组件：
+在 [GitHub Releases](https://github.com/likeyun/CodexQuotaWidget/releases) 下载对应系统的压缩包并解压：Windows 和 Linux 启动包内的 `CodexQuota` 程序，macOS 打开 `CodexQuota.app`。macOS 包目前未签名，首次打开时可能需要在“系统设置 → 隐私与安全性”允许运行。
+
+也可以克隆项目并从源码启动。在 Windows 项目目录双击 `Start-Widget.cmd`：
 
 ```powershell
 git clone https://github.com/likeyun/CodexQuotaWidget.git
@@ -30,7 +32,18 @@ Set-Location -LiteralPath '.\CodexQuotaWidget'
 .\Start-Widget.cmd
 ```
 
-也可以手动创建环境：
+macOS / Linux：
+
+```bash
+git clone https://github.com/likeyun/CodexQuotaWidget.git
+cd CodexQuotaWidget
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m quota_widget
+```
+
+Windows 手动创建环境：
 
 ```powershell
 py -3 -m venv .venv
@@ -107,7 +120,7 @@ curl.exe 'http://127.0.0.1:18765/api/health'
 
 ## 📦 打包
 
-在 Windows PowerShell 中运行：
+本地 Windows 打包：
 
 ```powershell
 .\scripts\build.ps1
@@ -118,6 +131,8 @@ curl.exe 'http://127.0.0.1:18765/api/health'
 ```powershell
 .\scripts\create-shortcut.ps1
 ```
+
+GitHub Actions 会在推送到 `main`、提交 Pull Request 或手动运行时构建 Windows、Linux 和 macOS（Apple Silicon）版本，并提供可下载的构建产物。推送 `v*` 格式的标签（例如 `v1.0.0`）会自动创建 GitHub Release 并附上三端压缩包。
 
 ## 🧭 常用操作
 
@@ -135,3 +150,4 @@ curl.exe 'http://127.0.0.1:18765/api/health'
 ## 📄 许可证
 
 本项目以 MIT License 发布，详见 [LICENSE](LICENSE)。
+
